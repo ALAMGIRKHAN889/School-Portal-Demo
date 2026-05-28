@@ -21,6 +21,8 @@ app.use('/api/students', require('./routes/studentRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 app.use('/api/admissions', require('./routes/admissionRoutes'));
 app.use('/api/teachers', require('./routes/teacherRoutes'));
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/classes', require('./routes/classRoutes'));
 
 // Basic Route
 app.get('/', (req, res) => {

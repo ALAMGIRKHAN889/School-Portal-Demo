@@ -4,7 +4,35 @@ const User = require('../models/User');
 // Get all students
 const getStudents = async (req, res) => {
   try {
-    const students = await Student.find().populate('user', 'name email').populate('class', 'name section');
+    let query = {};
+    if (req.query.classId) {
+      query.class = req.query.classId;
+    }
+    
+    let students = await Student.find(query)
+      .populate('user', 'name email')
+      .populate('class', 'name section');
+
+    // SELF-HEALING: If students have no class, try to assign them to "Grade 10" as a fallback or fix
+    const unassigned = students.filter(s => !s.class);
+    if (unassigned.length > 0) {
+      const Class = require('../models/Class');
+      let defaultClass = await Class.findOne({ name: 'Grade 10' });
+      if (!defaultClass) {
+        defaultClass = await Class.create({ name: 'Grade 10', section: 'A' });
+      }
+      
+      for (let s of unassigned) {
+        s.class = defaultClass._id;
+        await s.save();
+      }
+      
+      // Re-fetch with population
+      students = await Student.find(query)
+        .populate('user', 'name email')
+        .populate('class', 'name section');
+    }
+
     res.json(students);
   } catch (error) {
     res.status(500).json({ message: error.message });

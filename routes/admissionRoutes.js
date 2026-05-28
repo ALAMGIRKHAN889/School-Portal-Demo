@@ -57,6 +57,19 @@ router.patch('/:id/approve', async (req, res) => {
     const count = await Student.countDocuments();
     const rollNumber = `STU-${String(count + 1).padStart(4, '0')}`;
 
+    // Find or create Class based on string (e.g. "Grade 10")
+    const Class = require('../models/Class');
+    let studentClass = await Class.findOne({ 
+      name: { $regex: new RegExp(`^${admission.classApplyingFor}$`, 'i') } 
+    });
+
+    if (!studentClass) {
+      studentClass = await Class.create({
+        name: admission.classApplyingFor,
+        section: 'A', // Default section
+      });
+    }
+
     // Create Student record
     await Student.create({
       user: user._id,
@@ -64,6 +77,7 @@ router.patch('/:id/approve', async (req, res) => {
       dateOfBirth: admission.dob,
       parentName: admission.parentName,
       parentContact: admission.contactNumber,
+      class: studentClass._id,
     });
 
     // Mark admission as Approved
